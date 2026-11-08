@@ -1,0 +1,6 @@
+mne>=1.9,<2
+antio>=0.5,<1
+numpy>=2.0,<3
+scipy>=1.11,<2
+matplotlib>=3.8,<4
+scikit-learn>=1.5,<2

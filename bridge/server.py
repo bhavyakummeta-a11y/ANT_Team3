@@ -8,7 +8,8 @@ from pathlib import Path
 import time
 
 from aiohttp import web
-from pylsl import StreamInlet, resolve_streams
+from pylsl import StreamInlet, resolve_streams, local_clock, proc_clocksync
+from p300 import P300Session
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -53,14 +54,59 @@ def create_app(initial_timeout=30, stall_timeout=10):
         ws = web.WebSocketResponse(heartbeat=15)
         await ws.prepare(request)
         inlet = None
+        p300 = None
+        use_p300 = request.query.get('p300') == '1'
         async def receive_close():
-            async for _ in ws:
-                pass
+            async for message in ws:
+                if not use_p300 or message.type != web.WSMsgType.TEXT:
+                    continue
+                payload = {}
+                try:
+                    payload = json.loads(message.data)
+                    if not isinstance(payload, dict):
+                        raise ValueError('Expected a JSON object.')
+                    op = payload.get('op')
+                    if op == 'clock':
+                        result = {'clock': local_clock()}
+                    elif p300 is None:
+                        raise ValueError('Wait for EEG connection.')
+                    elif op == 'begin':
+                        if not p300.buffer or local_clock() - p300.buffer[-1][0] > 1:
+                            raise ValueError('Fresh EEG samples are required.')
+                        labels = payload.get('labels', [])
+                        if not isinstance(labels, list) or len(labels) != 9 or any(not isinstance(x, str) or len(x) > 80 for x in labels):
+                            raise ValueError('Nine grid labels are required.')
+                        p300.begin(payload.get('target'))
+                        p300.round['labels'] = labels
+                        p300.round['purpose'] = str(payload.get('purpose', 'unknown'))[:40]
+                        result = {'started': True}
+                    elif op == 'marker':
+                        p300.marker(payload['cell'], float(payload['onset']), float(payload['uncertainty']), local_clock())
+                        result = {'marked': True}
+                    elif op == 'finish':
+                        result = p300.finish()
+                    elif op == 'evaluate':
+                        result = await asyncio.to_thread(p300.evaluate)
+                    elif op == 'abort':
+                        p300.round = None
+                        result = {'aborted': True}
+                    elif op == 'export':
+                        result = p300.export()
+                    else:
+                        raise ValueError('Unknown P300 operation.')
+                    await ws.send_json({'type': 'reply', 'id': payload.get('id'), 'result': result})
+                except (ValueError, KeyError, TypeError) as exc:
+                    if p300 is not None:
+                        p300.round = None
+                    await ws.send_json({'type': 'reply', 'id': payload.get('id') if isinstance(payload, dict) else None, 'error': str(exc)})
         receiver = asyncio.create_task(receive_close())
         try:
-            inlet = StreamInlet(info, max_buflen=30, max_chunklen=1, recover=False)
+            inlet = StreamInlet(info, max_buflen=30, max_chunklen=1, recover=False,
+                                processing_flags=proc_clocksync if use_p300 else 0)
             await asyncio.to_thread(inlet.open_stream, timeout=5.0)
             full = await asyncio.to_thread(inlet.info, timeout=5.0)
+            if use_p300:
+                p300 = P300Session(full.nominal_srate(), channels(full))
             await ws.send_json({'type': 'connected', 'stream': summary(full), 'channels': channels(full)})
             last_sample = time.monotonic()
             received = 0
@@ -72,6 +118,8 @@ def create_app(initial_timeout=30, stall_timeout=10):
                     received += len(stamps)
                     last_sample = time.monotonic()
                     clean = [[float(x) if math.isfinite(float(x)) else None for x in row] for row in samples]
+                    if p300 is not None:
+                        p300.feed(clean, stamps)
                     await ws.send_str(json.dumps({'type': 'samples', 'samples': clean, 'timestamps': stamps}, allow_nan=False))
                 else:
                     silence = time.monotonic() - last_sample
@@ -100,11 +148,25 @@ def create_app(initial_timeout=30, stall_timeout=10):
         return ws
 
     async def asset(request):
-        name = request.match_info.get('name', 'index.html')
-        if name not in {'index.html', 'index2.html', 'eeg-live.js'}:
+        name = request.match_info.get('name', 'speller.html')
+        if name not in {'speller.html', 'speller.js', 'speller.css', 'index.html', 'index2.html', 'eeg-live.js', 'eeg-trigger.js', 'research.html', 'research-ui.js', 'research-ui.css'}:
             raise web.HTTPNotFound()
         return web.FileResponse(ROOT / name)
 
+    async def research_output(request):
+        name = request.match_info['name']
+        # Only generated public-facing reports/figures, never recordings or model binaries.
+        if (Path(name).name != name or not name.startswith(('ant_', 'external_', 'comparison_'))
+                or Path(name).suffix not in {'.json', '.svg', '.png', '.md', '.csv'}):
+            raise web.HTTPNotFound()
+        path = ROOT / 'research' / 'outputs' / name
+        if not path.is_file():
+            raise web.HTTPNotFound()
+        response = web.FileResponse(path)
+        response.headers['Cache-Control'] = 'no-cache'
+        return response
+
+    app.router.add_get('/research/outputs/{name}', research_output)
     app.router.add_get('/api/streams', discover)
     app.router.add_get('/api/eeg', stream)
     app.router.add_get('/', asset)

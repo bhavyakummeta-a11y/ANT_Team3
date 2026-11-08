@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "status": "Exploratory cross-dataset comparison",
+  "findings": [
+    "Matched features were compared at the same ten electrodes using 160 Hz, a 1\u201335 Hz passband, 8\u201313/13\u201330 Hz power, common-channel mean reference, and fixed event windows.",
+    "ANT contributes three matched left-hand task pairs from two recordings; PhysioNet contributes left-fist conditions from ten participants. These are different experimental units and different actions.",
+    "The public classifier reached 53.9% balanced accuracy versus a 50.0% dummy baseline. This simple approach is near chance and is not ready to drive software selection.",
+    "This comparison is descriptive: matching or opposing feature directions does not establish model transfer or validate cognition. No ANT accuracy or raw-waveform correlation is computed."
+  ],
+  "limitations": [
+    "ANT baselines are unlabelled gaps; PhysioNet baselines are explicitly annotated rest.",
+    "The ANT reach/two-finger/let-go labels do not correspond exactly to repeated fist opening/closing in PhysioNet.",
+    "ANT task pairs come from one participant/session context; they are not three independent participants.",
+    "ANT amplitude excursions are flagged at 300 \u00b5V; external epochs above 500 \u00b5V are excluded. Quality-control policy differs and is disclosed in each report.",
+    "Electrode measurements share a reference and are statistically dependent; no electrode-wise significance test is offered.",
+    "No consistent, validated software-command signal has been established. A new randomized, repeated-task ANT recording with an independent held-out run is needed."
+  ],
+  "channel_comparisons": [
+    {
+      "band": "mu",
+      "channel": "C3",
+      "ant_difference_db": 2.035559499990599,
+      "external_difference_db": 1.162321924717968,
+      "direction_agrees": true
+    },
+    {
+      "band": "mu",
+      "channel": "C4",
+      "ant_difference_db": 1.1040913780880637,
+      "external_difference_db": 1.0042926119068945,
+      "direction_agrees": true
+    },
+    {
+      "band": "mu",
+      "channel": "F3",
+      "ant_difference_db": 1.2815636009095384,
+      "external_difference_db": 1.1317231605886557,
+      "direction_agrees": true
+    },
+    {
+      "band": "mu",
+      "channel": "F4",
+      "ant_difference_db": 0.007235716917875242,
+      "external_difference_db": 1.0721249684059706,
+      "direction_agrees": true
+    },
+    {
+      "band": "mu",
+      "channel": "Fz",
+      "ant_difference_db": -0.33735390558582545,
+      "external_difference_db": 1.1747928763791147,
+      "direction_agrees": false
+    },
+    {
+      "band": "mu",
+      "channel": "P3",
+      "ant_difference_db": -0.06557408981814057,
+      "external_difference_db": 1.1144670681614406,
+      "direction_agrees": false
+    },
+    {
+      "band": "mu",
+      "channel": "P4",
+      "ant_difference_db": 0.07106251493807673,
+      "external_difference_db": 0.7959222734460346,
+      "direction_agrees": true
+    },
+    {
+      "band": "mu",
+      "channel": "Pz",
+      "ant_difference_db": -2.6466854687682666,
+      "external_difference_db": 0.7085642208801491,
+      "direction_agrees": false
+    },
+    {
+      "band": "mu",
+      "channel": "O1",
+      "ant_difference_db": 3.0147110964860464,
+      "external_difference_db": 0.8771375001581081,
+      "direction_agrees": true
+    },
+    {
+      "band": "mu",
+      "channel": "O2",
+      "ant_difference_db": 0.5956673277314605,
+      "external_difference_db": 1.0720826107822417,
+      "direction_agrees": true
+    },
+    {
+      "band": "beta",
+      "channel": "C3",
+      "ant_difference_db": 1.4233168230670943,
+      "external_difference_db": 0.9333415092174168,
+      "direction_agrees": true
+    },
+    {
+      "band": "beta",
+      "channel": "C4",
+      "ant_difference_db": 2.37928137095466,
+      "external_difference_db": 1.1585137577721432,
+      "direction_agrees": true
+    },
+    {
+      "band": "beta",
+      "channel": "F3",
+      "ant_difference_db": 0.9377928364683751,
+      "external_difference_db": 0.07447106641991269,
+      "direction_agrees": true
+    },
+    {
+      "band": "beta",
+      "channel": "F4",
+      "ant_difference_db": 1.7505185069318472,
+      "external_difference_db": 0.24100428425240975,
+      "direction_agrees": true
+    },
+    {
+      "band": "beta",
+      "channel": "Fz",
+      "ant_difference_db": 1.008951947582956,
+      "external_difference_db": 0.5563506024690051,
+      "direction_agrees": true
+    },
+    {
+      "band": "beta",
+      "channel": "P3",
+      "ant_difference_db": 2.8934635191785456,
+      "external_difference_db": 0.9695299443489901,
+      "direction_agrees": true
+    },
+    {
+      "band": "beta",
+      "channel": "P4",
+      "ant_difference_db": -0.7130912663053376,
+      "external_difference_db": 0.6314991983321961,
+      "direction_agrees": false
+    },
+    {
+      "band": "beta",
+      "channel": "Pz",
+      "ant_difference_db": -0.5207431887581446,
+      "external_difference_db": 0.14167322004540875,
+      "direction_agrees": false
+    },
+    {
+      "band": "beta",
+      "channel": "O1",
+      "ant_difference_db": 1.7029469065307907,
+      "external_difference_db": 0.12331395180876234,
+      "direction_agrees": true
+    },
+    {
+      "band": "beta",
+      "channel": "O2",
+      "ant_difference_db": -0.2686288309184122,
+      "external_difference_db": -0.13204493779851245,
+      "direction_agrees": true
+    }
+  ],
+  "counts": {
+    "ant_task_pairs": 3,
+    "external_participants": 10
+  },
+  "figures": [
+    {
+      "path": "research/outputs/comparison_profiles.svg",
+      "title": "Compare feature directions across datasets",
+      "description": "Imagined-minus-performed change in baseline-relative power. Left-hand conditions only; different tasks, baselines and experimental units prevent a direct replication claim."
+    }
+  ],
+  "provenance": {
+    "ant_report_sha256": "569186a1833a8dc6966b6f80939ad71e914d758c760e21cb84a63cdfd3969d2a",
+    "external_report_sha256": "eccb8745103c710ed8ef4c429602620fb5a04abb6efe325d32cae4d4f0a71829"
+  },
+  "next_experiment": [
+    "Choose one or two precisely defined mental tasks after reviewing signal quality; do not map them to hand directions by default.",
+    "Randomize repeated task and explicit-rest trials within each run, saving cue onset and end markers.",
+    "Keep hardware settings, references, and sampling rates consistent; record observations of movement/eye artifacts.",
+    "Collect a separate run that remains untouched during feature, threshold, and model selection.",
+    "Measure false activations during rest, missed trials, latency, and participant variability before connecting a command detector."
+  ]
+}

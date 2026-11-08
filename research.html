@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1117"><title>NEUROBIND · EEG research & interaction</title>
+<link rel="stylesheet" href="research-ui.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to research</a>
+<div class="workspace">
+<aside class="sidebar">
+<a class="brand" href="research.html"><span class="brandmark" aria-hidden="true">∿</span><span>NEUROBIND<small>RESEARCH & INTERACTION</small></span></a>
+<p class="nav-label">WORKSPACE</p>
+<nav aria-label="Research sections"><a href="speller.html">Attention grid ↗</a><a href="#ant" class="current">ANT findings</a><a href="#external">External benchmark</a><a href="#comparison">Compare the evidence</a><a href="#interaction">Interaction prototype</a><a href="#live">Live EEG connection</a><a href="index.html">Earlier demonstrations ↗</a></nav>
+<div class="side-note"><span class="status-dot"></span>Research prototype<p>Mental tasks are experimental inputs. Application commands stay configurable.</p></div>
+</aside>
+<main id="content">
+<header class="topbar"><span>ANT_TEAM3 / EEG RESEARCH</span><span class="badge">EVIDENCE BEFORE AUTOMATION</span></header>
+<div class="content">
+<div class="hero"><div><p class="eyebrow">FROM SIGNALS TO USEFUL INTERACTION</p><h1>Measure first.<br><span>Then connect.</span></h1><p class="intro">Explore performed and imagined actions, test what repeats, and build an interface that can respond to validated EEG commands.</p></div><div class="hero-note"><span class="micro">OUR QUESTION</span><p>Which defined mental tasks produce distinguishable EEG patterns?</p><small>Hand recordings are an initial experiment—not the interface’s prescribed controls.</small></div></div>
+<div class="pipeline" aria-label="Research workflow"><span><b>01</b> Recorded signals</span><i aria-hidden="true">→</i><span><b>02</b> Measured features</span><i aria-hidden="true">→</i><span><b>03</b> Independent evaluation</span><i aria-hidden="true">→</i><span><b>04</b> Configurable commands</span></div>
+<p id="load-status" class="load-status" role="status">Loading measured reports…</p>
+<section id="ant" class="section" aria-labelledby="ant-title">
+<div class="section-head"><div><p class="eyebrow">01 / YOUR EXPERIMENT</p><h2 id="ant-title">ANT recording findings</h2></div><span class="badge measured">MEASURED · EXPLORATORY</span></div>
+<p class="section-intro">Actual samples and annotations from your recordings. Observed differences do not establish a reliable command decoder.</p>
+<div id="ant-metrics" class="metrics"></div>
+<div class="split"><article class="card"><h3>What the analysis found</h3><div id="ant-findings" class="report-text"><p>Waiting for the ANT report.</p></div></article><article class="card caveat"><h3>What remains uncertain</h3><div id="ant-limitations" class="report-text"></div></article></div>
+<div id="ant-figures" class="figures"></div>
+<details class="card"><summary>Recording inventory & annotations</summary><p class="subtext">Every recording has a documented role. Select a recording to inspect its event labels and quality notes.</p><div class="table-scroll"><table><caption class="sr-only">ANT recording inventory</caption><thead><tr><th>Recording</th><th>Duration</th><th>Rate</th><th>Channels</th><th>Role</th></tr></thead><tbody id="ant-recordings"></tbody></table></div><label for="recording-picker">Inspect recording</label><select id="recording-picker"><option value="">Reports loading</option></select><div id="recording-detail"></div></details>
+<details class="card"><summary>Task-window eligibility & exclusions</summary><p class="subtext">All 24 annotated tasks are accounted for. Excluded intervals remain visible; they are not silently extended or relabeled.</p><div id="ant-events"></div></details>
+<details class="card"><summary>Event timing audit & analysis method</summary><div id="ant-methods"></div><div id="ant-timing"></div><a class="text-link" href="research/outputs/ant_report.json" download>Download ANT report JSON ↓</a></details>
+</section>
+<section id="external" class="section" aria-labelledby="external-title">
+<div class="section-head"><div><p class="eyebrow">02 / INDEPENDENT PUBLIC DATA</p><h2 id="external-title">External benchmark</h2></div><span class="badge external">PUBLIC DATA · SEPARATE EVALUATION</span></div>
+<p class="section-intro">PhysioNet performed-versus-imagined movement data tests the analysis on more examples. Its accuracy is not accuracy on your ANT participant or live stream.</p>
+<div id="external-metrics" class="metrics"></div>
+<div class="split"><article class="card"><h3>Benchmark results</h3><div id="external-findings" class="report-text"><p>Waiting for the external report.</p></div></article><article class="card caveat"><h3>Transfer limitations</h3><div id="external-limitations" class="report-text"></div></article></div>
+<div id="external-figures" class="figures"></div>
+<details class="card"><summary>Source, selection & evaluation method</summary><div id="external-methods"></div><div id="external-source"></div><a class="text-link" href="https://physionet.org/content/eegmmidb/1.0.0/" target="_blank" rel="noopener">View original PhysioNet dataset ↗</a><br><a class="text-link" href="research/outputs/external_report.json" download>Download external report JSON ↓</a></details>
+</section>
+<section id="comparison" class="section" aria-labelledby="comparison-title">
+<div class="section-head"><div><p class="eyebrow">03 / WHAT AGREES—AND WHAT DOESN’T</p><h2 id="comparison-title">Compare the evidence</h2></div><span class="badge">HYPOTHESES TO TEST</span></div>
+<div class="card"><p>Compare task-related features and electrode patterns, not sample-by-sample waveforms from different people. Keep dataset, task, participant, and recording differences visible.</p><div id="comparison-findings" class="report-text"></div><div id="comparison-figures" class="figures"></div><details><summary>Measured channel differences and limitations</summary><div id="comparison-results" class="report-text"></div><div id="comparison-limitations" class="report-text"></div></details><details><summary>Next experiment</summary><div id="next-experiment" class="report-text"></div></details><div class="table-scroll"><table><thead><tr><th>Evidence</th><th>What it can support</th><th>What it cannot establish</th></tr></thead><tbody><tr><td>ANT recordings</td><td>Observed differences in this experiment</td><td>Repeatability across users or sessions</td></tr><tr><td>External benchmark</td><td>Performance on the specified public evaluation</td><td>Performance on your ANT cap or participant</td></tr><tr><td>Interaction prototype</td><td>Accessible navigation and command routing</td><td>Validated thought decoding</td></tr></tbody></table></div></div>
+</section>
+<section id="interaction" class="section" aria-labelledby="interaction-title">
+<div class="section-head"><div><p class="eyebrow">04 / A FLEXIBLE SOFTWARE FOUNDATION</p><h2 id="interaction-title">Choose your next task</h2></div><span class="badge demo">CONVENTIONAL CONTROLS + SIMULATION</span></div>
+<p class="section-intro">Use the mouse, keyboard, or optional scanning. A future validated detector could issue the same generic commands. No mental task is assigned to a command here.</p>
+<div class="split interaction-grid"><div class="card"><div class="card-heading"><h3>Task board</h3><span class="subtext">3 available tasks</span></div><p id="board-help" class="subtext">Tab to a task and press Enter, or use the navigation controls below. Scanning highlights options without moving keyboard focus.</p><div class="task-board" role="group" aria-label="Available software tasks" aria-describedby="board-help"><button class="task focused" data-task="0" aria-pressed="true"><span class="task-icon" aria-hidden="true">▤</span><span><b>Read a note</b><small>Open the experiment reminder</small></span><span class="task-number">01</span></button><button class="task" data-task="1" aria-pressed="false"><span class="task-icon" aria-hidden="true">◷</span><span><b>Take a pause</b><small>Start a 30-second break timer</small></span><span class="task-number">02</span></button><button class="task" data-task="2" aria-pressed="false"><span class="task-icon" aria-hidden="true">☼</span><span><b>Adjust the view</b><small>Toggle larger interface text</small></span><span class="task-number">03</span></button></div><div class="controls"><button id="previous">← Previous</button><button id="select" class="primary">Select highlighted</button><button id="next">Next →</button><button id="cancel">Cancel</button></div><div class="scan-controls"><button id="scan" aria-pressed="false">Start scanning</button><label for="scan-speed">Scan interval</label><select id="scan-speed"><option value="4000">4 seconds</option><option value="6000">6 seconds</option><option value="8000">8 seconds</option></select></div><p id="task-status" role="status" aria-live="polite">Read a note is highlighted. No task selected.</p><div id="task-output" class="task-output" hidden></div></div>
+<div class="stack"><article class="card"><span class="badge demo">MANUAL SIMULATION</span><h3>Try the command contract</h3><p>This button represents a hypothetical detector output. Clicking it is a manual simulation, never evidence of an EEG prediction.</p><label for="sim-command">Simulated generic command</label><select id="sim-command"><option value="select">Select highlighted item</option><option value="next">Navigate forward</option><option value="previous">Navigate backward</option><option value="cancel">Cancel task</option><option value="none">No action / uncertain</option></select><button id="simulate" class="full">Emit simulated command</button><p class="decoder-state">EEG decoder: <strong>not connected</strong></p></article><article class="card"><h3>Recent actions</h3><ol id="command-log" class="command-log"><li>No commands yet.</li></ol></article></div></div>
+</section>
+<details id="live" class="live-details"><summary>Live EEG connection <span class="subtext">Live samples + experimental amplitude-triggered tab navigation</span></summary><div class="main" id="live-host"></div></details>
+<footer>NEUROBIND / ANT_TEAM3 <span>Measured observations ≠ validated commands</span></footer>
+</div></main></div>
+<script src="research-ui.js"></script><script src="eeg-trigger.js"></script><script src="eeg-live.js"></script>
+</body></html>

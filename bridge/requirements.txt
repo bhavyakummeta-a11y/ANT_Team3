@@ -1,2 +1,5 @@
 aiohttp>=3.10,<4
 pylsl>=1.17,<2
+numpy>=2,<3
+scipy>=1.11,<2
+scikit-learn>=1.5,<2
