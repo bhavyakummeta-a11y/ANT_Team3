@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from p300 import P300Session
+from p300 import P300Session, SignalQualityError
 
 CHANNELS = [dict(label=label, unit='microvolts') for label in ['Pz', 'C3', 'C4']]
 
@@ -72,6 +72,87 @@ class P300Tests(unittest.TestCase):
                 self.assertEqual(s.finish()['calibration_rounds'], 1)
                 self.assertEqual(np.array(s.trials[0]['features_uv']).shape, (27, 48))
                 self.assertTrue(np.isfinite(s.trials[0]['features_uv']).all())
+
+    def measured_session(self, unit='microvolts', extra_flat=False, high=False, dc=0):
+        channels = [dict(label=c['label'], unit=unit) for c in CHANNELS]
+        if extra_flat:
+            channels.append(dict(label='Cz', unit=unit))
+        s = P300Session(500, channels)
+        times = np.arange(0, 14, 1 / 500)
+        rng = np.random.default_rng(123)
+        values = rng.normal(0, 2, (len(times), len(channels))) + dc
+        if extra_flat:
+            values[:, -1] = 0
+        if high:
+            # Large out-of-band noise must still be rejected by raw checks.
+            values[:, 1] += 200 * np.sin(2 * np.pi * 50 * times)
+        if unit.strip() == 'Volt':
+            values /= 1e6
+        s.feed(values.tolist(), times.tolist())
+        return s
+
+    def finish_measured(self, s):
+        s.begin(0)
+        for j, cell in enumerate(np.tile(np.arange(9), 3)):
+            onset = 3 + j * .35
+            s.marker(int(cell), onset, .001, onset + .01)
+        return s.finish()
+
+    def test_flat_optional_channel_named_and_rejected_evidence_retained(self):
+        s = self.measured_session(extra_flat=True)
+        with self.assertRaises(SignalQualityError) as caught:
+            self.finish_measured(s)
+        self.assertIn('CZ: flat', str(caught.exception))
+        report = caught.exception.quality
+        bad = [c for c in report['channels'] if c['reasons']]
+        self.assertEqual([c['label'] for c in bad], ['CZ'])
+        self.assertEqual(bad[0]['raw_std_uv'], 0)
+        self.assertEqual(s.trials, [])
+        self.assertEqual(len(s.export()['rejected_rounds']), 1)
+        self.assertEqual(s.export()['rejected_rounds'][0]['quality'], report)
+
+    def test_raw_noise_remains_rejected_even_if_filter_removes_it(self):
+        s = self.measured_session(high=True)
+        with self.assertRaises(SignalQualityError) as caught:
+            self.finish_measured(s)
+        self.assertIn('C3: raw peak-to-peak', str(caught.exception))
+        c3 = next(c for c in caught.exception.quality['channels'] if c['label'] == 'C3')
+        self.assertGreater(c3['raw_ptp_uv'], 300)
+        self.assertLess(c3['filtered_ptp_uv'], 300)
+        self.assertFalse(s.enabled)
+
+    def test_volts_microvolts_and_dc_offset_equivalence(self):
+        uv, volts, offset = (self.measured_session(), self.measured_session(unit=' Volt '),
+                             self.measured_session(dc=10000))
+        for s in [uv, volts, offset]:
+            self.assertEqual(self.finish_measured(s)['calibration_rounds'], 1)
+        expected = uv.trials[0]['features_uv']
+        np.testing.assert_allclose(expected, volts.trials[0]['features_uv'], atol=1e-9)
+        np.testing.assert_allclose(expected, offset.trials[0]['features_uv'], atol=1e-7)
+        self.assertEqual(volts.selected[0]['scale_to_uv'], 1e6)
+
+    def test_explicit_exclusion_before_calibration_and_frozen_after(self):
+        s = self.measured_session(extra_flat=True)
+        s.configure([0, 1, 2])
+        self.assertEqual(s.labels, ['PZ', 'C3', 'C4'])
+        self.assertEqual(len(s.buffer), 0)
+        source = self.measured_session()
+        s.feed([row for _, row in source.buffer], [t for t, _ in source.buffer])
+        self.finish_measured(s)
+        with self.assertRaisesRegex(ValueError, 'locked'):
+            s.configure([0, 1, 2])
+        fresh = self.measured_session(extra_flat=True)
+        with self.assertRaises(ValueError): fresh.configure([1, 2, 3])
+        with self.assertRaises(ValueError): fresh.configure([0, 1])
+        with self.assertRaises(ValueError): fresh.configure([0, 1, 99])
+        self.assertEqual(len(fresh.selected), 4)
+
+    def test_preflight_waits_then_identifies_flat_channel(self):
+        self.assertEqual(self.session().quality()['status'], 'waiting')
+        report = self.measured_session(extra_flat=True).quality()
+        self.assertEqual(report['status'], 'rejected')
+        self.assertEqual(report['epochs_checked'], 1)
+        self.assertEqual(report['channels'][-1]['reasons'], ['flat raw signal'])
 
     def test_channels_and_units(self):
         with self.assertRaises(ValueError): P300Session(100, [dict(label='C3', unit='Volt')])

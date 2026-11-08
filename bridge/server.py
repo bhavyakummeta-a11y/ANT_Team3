@@ -70,6 +70,14 @@ def create_app(initial_timeout=30, stall_timeout=10):
                         result = {'clock': local_clock()}
                     elif p300 is None:
                         raise ValueError('Wait for EEG connection.')
+                    elif op == 'quality':
+                        if p300.buffer and local_clock() - p300.buffer[-1][0] > 1:
+                            result = dict(status='waiting', message='Waiting for fresh EEG samples. Last samples are over one second old.',
+                                          channels=[], window_seconds=0)
+                        else:
+                            result = p300.quality()
+                    elif op == 'configure':
+                        result = p300.configure(payload.get('indices'))
                     elif op == 'begin':
                         if not p300.buffer or local_clock() - p300.buffer[-1][0] > 1:
                             raise ValueError('Fresh EEG samples are required.')
@@ -98,7 +106,9 @@ def create_app(initial_timeout=30, stall_timeout=10):
                 except (ValueError, KeyError, TypeError) as exc:
                     if p300 is not None:
                         p300.round = None
-                    await ws.send_json({'type': 'reply', 'id': payload.get('id') if isinstance(payload, dict) else None, 'error': str(exc)})
+                    quality = getattr(exc, 'quality', None)
+                    logging.warning('P300 %s failed: %s', payload.get('op') if isinstance(payload, dict) else 'request', exc)
+                    await ws.send_json({'type': 'reply', 'id': payload.get('id') if isinstance(payload, dict) else None, 'error': str(exc), 'quality': quality})
         receiver = asyncio.create_task(receive_close())
         try:
             inlet = StreamInlet(info, max_buflen=30, max_chunklen=1, recover=False,
@@ -107,7 +117,9 @@ def create_app(initial_timeout=30, stall_timeout=10):
             full = await asyncio.to_thread(inlet.info, timeout=5.0)
             if use_p300:
                 p300 = P300Session(full.nominal_srate(), channels(full))
-            await ws.send_json({'type': 'connected', 'stream': summary(full), 'channels': channels(full)})
+            await ws.send_json({'type': 'connected', 'stream': summary(full), 'channels': channels(full),
+                                'p300_channels': p300.candidates if p300 else [],
+                                'quality_policy': p300.quality_policy() if p300 else None})
             last_sample = time.monotonic()
             received = 0
             last_status = 0
@@ -151,7 +163,9 @@ def create_app(initial_timeout=30, stall_timeout=10):
         name = request.match_info.get('name', 'speller.html')
         if name not in {'speller.html', 'speller.js', 'speller.css', 'index.html', 'index2.html', 'eeg-live.js', 'eeg-trigger.js', 'research.html', 'research-ui.js', 'research-ui.css'}:
             raise web.HTTPNotFound()
-        return web.FileResponse(ROOT / name)
+        response = web.FileResponse(ROOT / name)
+        response.headers['Cache-Control'] = 'no-cache'
+        return response
 
     async def research_output(request):
         name = request.match_info['name']

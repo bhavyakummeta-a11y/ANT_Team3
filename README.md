@@ -16,7 +16,18 @@ home page; the existing reports remain at `/research.html` and the waveform
 monitor at `/research.html#live`. Windows does not need Python for this setup.
 
 1. Find EEG streams, choose the eego stream, and Connect.
-2. Start calibration round 1. Attend to the named tile and count its highlights.
+2. Click **Check signal** before a round. It shows each decoder electrode's raw
+   and 1–15 Hz peak-to-peak amplitude, raw standard deviation, declared source
+   unit and conversion factor. A rejected round shows the same diagnostic for
+   all 27 epochs, naming each failing electrode. A flat channel and excessive
+   raw amplitude are reported separately; thresholds remain 300 µV raw
+   peak-to-peak and 0.01 µV raw standard deviation.
+   If the lab operator verifies that an electrode is unused, deselect it under
+   **Calibration channels**, then **Apply channels** and check again. At least three
+   supported channels including Pz/P3/P4 are required. Choices freeze after the
+   first accepted round and remain fixed for training, evaluation and selection.
+   Do not exclude a channel just to improve the held-out score.
+   Then start calibration round 1. Attend to the named tile and count its highlights.
 3. Complete 18 rounds, each started when ready (roughly four minutes of stimuli,
    plus breaks). The first nine train; the final nine evaluate the frozen model.
 4. At least 7/9 correct held-out selections unlock **Start EEG selection**.
@@ -50,7 +61,8 @@ uncertainty >20 ms reject a round. Physical display latency remains unmeasured;
 use a photodiode/hardware timing validation for rigorous ERP experiments.
 
 Download session evidence before disconnecting: JSON includes grid labels,
-targets, onset markers, processed ERP features and held-out predictions. This is
+targets, onset markers, processed ERP features and held-out predictions, plus
+the last 20 rejected-round diagnostics. Download is available even at 0/18 rounds. This is
 **not continuous raw EEG**; use LabRecorder/XDF separately for raw recordings.
 Sessions/models are memory-only and reconnecting clears calibration. Existing
 movement recordings/public motor benchmarks are not P300 training data; no
