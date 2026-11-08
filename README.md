@@ -2,6 +2,47 @@
 
 NEUROBIND website and EEG recording analysis.
 
+## No-cap demo: public EEG calibration and replay
+
+Open **http://localhost:8765/p300-replay.html** and click **Run replay**.
+The page shows actual classifier predictions from held-out, recorded public EEG;
+it does not respond to a viewer's thoughts. All 60 test selections are available
+in chronological order, including errors and abstentions. The original 6×6
+row/column matrix is preserved instead of relabeling it as the live 3×3 protocol.
+
+Reproduce the offline calibration/evaluation:
+
+```sh
+.venv/bin/python -m pip install -r research/requirements.txt
+.venv/bin/python research/p300_benchmark.py
+.venv/bin/python -m unittest discover -s research -p 'test_p300_benchmark.py'
+```
+
+The fixed sample is BNCI 008-2014 A01–A03. For each participant, selections 1–15
+train a separate model; selections 16–35 are held out. The source files total
+about 65 MB and stay under ignored `data/external/bnci2014_008/`. Generated
+reports include SHA-256 provenance, individual predictions, quality exclusions,
+ERP plots and participant-level results. Raw files are not served by the website.
+
+This benchmark shares Fz/Pz/P3/P4 with all ten ANT recordings and uses the same
+ERP feature extractor and classifier factory as the live bridge. Training uses
+a different person-specific model for each public participant. The raw quality
+limits and 0.05 score-margin gate are fixed before evaluation; a row/column
+adapter is needed for the public protocol. The replay never installs a model
+in the live connection or bypasses its calibration gate.
+
+ANT's movement recordings lack timed letter stimuli. Electrode overlap supports
+software compatibility, not demonstrated waveform correlation or transfer of
+letter decoding to ANT. Public data are 256 Hz, right-earlobe referenced, from
+a different acquisition device. Independent ANT P300 recordings remain necessary.
+
+Source: [BNCI dataset 008-2014](https://bnci-horizon-2020.eu/database/data-sets),
+Santa Lucia Neuroelectrical Imaging and BCI Laboratory, CC BY-NC-ND 4.0;
+[Riccio et al. (2013)](https://doi.org/10.3389/fnhum.2013.00732).
+The delivered MAT `classes_stim` labels identify codes 1–6 as rows and 7–12 as
+columns; the PDF illustration transposes them. The parser follows explicit MAT
+metadata. Stimulus pulses last 32 samples, so only rising edges count as flashes.
+
 ## Attention grid: typing and assistant prototype
 
 Run the bridge **on your Mac** while eego streams LSL on Windows over the same Wi-Fi:

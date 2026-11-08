@@ -8,6 +8,26 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 
 
+def make_erp_classifier():
+    """Shared estimator; fitted only on a designated training split."""
+    return make_pipeline(StandardScaler(), LogisticRegression(C=.1, class_weight='balanced', max_iter=1000, random_state=42))
+
+
+def erp_features(times, filtered, onset):
+    """Shared 0–800 ms ERP feature vector, baseline -200–0 ms, in µV."""
+    baseline_samples = filtered[(times >= onset - .2) & (times < onset)]
+    if not len(baseline_samples):
+        raise ValueError('Missing samples inside the ERP baseline.')
+    baseline = baseline_samples.mean(axis=0)
+    bins = []
+    for offset in np.arange(0, .8, .05):
+        segment = filtered[(times >= onset + offset) & (times < onset + offset + .05)]
+        if not len(segment):
+            raise ValueError('Missing samples inside an ERP feature bin.')
+        bins.extend((segment.mean(axis=0) - baseline).tolist())
+    return bins
+
+
 class SignalQualityError(ValueError):
     def __init__(self, message, quality):
         super().__init__(message)
@@ -197,15 +217,7 @@ class P300Session:
         features = []
         for marker in markers:
             onset = marker['onset']
-            baseline = filtered[(times >= onset - .2) & (times < onset)].mean(axis=0)
-            # Nonoverlapping 50 ms means provide low-pass ERP features, 0–800 ms.
-            bins = []
-            for offset in np.arange(0, .8, .05):
-                segment = filtered[(times >= onset + offset) & (times < onset + offset + .05)]
-                if not len(segment):
-                    raise ValueError('Missing samples inside an ERP feature bin.')
-                bins.extend((segment.mean(axis=0) - baseline).tolist())
-            features.append(bins)
+            features.append(erp_features(times, filtered, onset))
         trial['features_uv'] = features
         if trial['target'] is not None:
             self.trials.append(trial)
@@ -216,7 +228,7 @@ class P300Session:
     def fit(trials):
         x = np.array([f for t in trials for f in t['features_uv']])
         y = np.array([int(m['cell'] == t['target']) for t in trials for m in t['markers']])
-        model = make_pipeline(StandardScaler(), LogisticRegression(C=.1, class_weight='balanced', max_iter=1000, random_state=42))
+        model = make_erp_classifier()
         model.fit(x, y)
         return model
 

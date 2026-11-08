@@ -161,7 +161,7 @@ def create_app(initial_timeout=30, stall_timeout=10):
 
     async def asset(request):
         name = request.match_info.get('name', 'speller.html')
-        if name not in {'speller.html', 'speller.js', 'speller.css', 'index.html', 'index2.html', 'eeg-live.js', 'eeg-trigger.js', 'research.html', 'research-ui.js', 'research-ui.css'}:
+        if name not in {'p300-replay.html', 'p300-replay.js', 'p300-replay.css', 'speller.html', 'speller.js', 'speller.css', 'index.html', 'index2.html', 'eeg-live.js', 'eeg-trigger.js', 'research.html', 'research-ui.js', 'research-ui.css'}:
             raise web.HTTPNotFound()
         response = web.FileResponse(ROOT / name)
         response.headers['Cache-Control'] = 'no-cache'
@@ -170,7 +170,7 @@ def create_app(initial_timeout=30, stall_timeout=10):
     async def research_output(request):
         name = request.match_info['name']
         # Only generated public-facing reports/figures, never recordings or model binaries.
-        if (Path(name).name != name or not name.startswith(('ant_', 'external_', 'comparison_'))
+        if (Path(name).name != name or not name.startswith(('ant_', 'external_', 'comparison_', 'p300_'))
                 or Path(name).suffix not in {'.json', '.svg', '.png', '.md', '.csv'}):
             raise web.HTTPNotFound()
         path = ROOT / 'research' / 'outputs' / name

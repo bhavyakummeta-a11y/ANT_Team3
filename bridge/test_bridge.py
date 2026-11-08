@@ -15,7 +15,7 @@ class BridgeTests(unittest.IsolatedAsyncioTestCase):
         await self.client.close()
 
     async def test_assets_and_missing_stream(self):
-        for path in ['/', '/speller.html', '/speller.js', '/speller.css', '/index2.html', '/eeg-live.js', '/eeg-trigger.js', '/research.html', '/research-ui.js', '/research-ui.css', '/research/outputs/ant_report.json']:
+        for path in ['/', '/p300-replay.html', '/p300-replay.js', '/p300-replay.css', '/research/outputs/p300_report.json', '/speller.html', '/speller.js', '/speller.css', '/index2.html', '/eeg-live.js', '/eeg-trigger.js', '/research.html', '/research-ui.js', '/research-ui.css', '/research/outputs/ant_report.json']:
             response = await self.client.get(path)
             self.assertEqual(response.status, 200)
         for path in ['/README.md', '/data/analysis.py', '/api/eeg?id=missing', '/research/ant.py', '/research/outputs/external_model.joblib']:
