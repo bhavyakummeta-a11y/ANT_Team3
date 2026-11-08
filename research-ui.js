@@ -180,6 +180,5 @@
   window.addEventListener('pagehide',()=>{stopScan();stopBreak();});
   for(const link of document.querySelectorAll('nav a[href^="#"]')) link.addEventListener('click',()=>{
     document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('current',a===link));
-    if(link.hash==='#live') $('live').open=true;
   });
 })();

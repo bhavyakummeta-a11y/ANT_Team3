@@ -52,9 +52,10 @@ Run the bridge **on your Mac** while eego streams LSL on Windows over the same W
 .venv/bin/python bridge/server.py --port 8765
 ```
 
-Open **http://localhost:8765** (or `/speller.html`). The grid is now the bridge's
-home page; the existing reports remain at `/research.html` and the waveform
-monitor at `/research.html#live`. Windows does not need Python for this setup.
+Open **http://localhost:8765** for Neural command operations, then choose
+**Simulator** (or open `/speller.html`). The simulator contains the only EEG
+connection and signal-check controls. Reports remain at `/research.html`.
+Windows does not need Python for this setup.
 
 1. Find EEG streams, choose the eego stream, and Connect.
 2. Click **Check signal** before a round. It shows each decoder electrode's raw
@@ -128,8 +129,8 @@ No frontend dependencies or build step are required.
 
 ## EEG integration status
 
-The original demo charts and commands are simulated. The separate Live EEG
-connection panel can receive real samples through the Python bridge described below;
+The operations charts and command demonstrations are simulated. The simulator
+at `/speller.html` can receive real samples through the Python bridge described below;
 a physical device connection must be established explicitly.
 Recorded EEG files are in `data/rotation_one` and `data/rotation_two`;
 `data/analysis.py` contains a separate offline analysis pipeline.
@@ -139,7 +140,7 @@ separate motion-sensor integration are not implemented.
 
 ## Live eego connection (Windows acquisition computer)
 
-The live EEG panel is available on both `index.html` and `index2.html`.
+EEG connection controls are available only on the simulator at `speller.html`.
 Run the bridge on the Windows computer where eego displays the EEG traces.
 In eego, enable **Enable LSL EEG streaming** and keep acquisition running.
 
@@ -151,11 +152,10 @@ py -m venv .venv
 .\.venv\Scripts\python.exe bridge\server.py --host 0.0.0.0 --port 8765
 ```
 
-Open `http://localhost:8765/research.html#live` on Windows. Click **Find EEG streams**, select
-the eego stream, then **Connect**. Choose a channel to view its received samples.
-For the alternate page, open `http://localhost:8765/index2.html`.
+Open `http://localhost:8765/speller.html` on Windows. Click **Find EEG streams**,
+select the eego stream, then **Connect**. Use **Check signal** to inspect channels.
 
-On your Mac, open `http://WINDOWS-IP:8765` using the Windows computer's active
+On your Mac, open `http://WINDOWS-IP:8765/speller.html` using the Windows computer's active
 IPv4 address from `ipconfig`. Both devices must have local network access.
 If Windows Firewall prompts, allow Python on the trusted private network.
 This development bridge has no authentication: use it only on your trusted
@@ -206,7 +206,7 @@ Bridge integration checks (uses a clearly named synthetic LSL test source):
 
 ## Research workspace: ANT + PhysioNet
 
-Open **http://localhost:8765/research.html** (also the bridge's default `/` page).
+Open **http://localhost:8765/research.html**. The default `/` opens Neural command operations.
 The earlier pages link to **Research & interaction**. For static-only browsing,
 run the port-8000 server above and open `http://localhost:8000/research.html`.
 The reports and figures work without a connected EEG device.
@@ -223,8 +223,8 @@ The research workspace includes:
   proof of model transfer, intention decoding, or repeatability.
 - A task board with mouse/keyboard controls, optional scanning, generic
   selection/cancel/navigation, and a visibly labeled manual simulation.
-  It is not connected to an EEG classifier. Live acquisition remains available
-  in the separate expandable Live EEG connection section.
+  It is not connected to an EEG classifier. Live acquisition is available only
+  on the simulator at `/speller.html`.
 
 ### Reproduce the research
 
@@ -304,35 +304,13 @@ PhysioNet platform citation listed by the source: Pollard et al. (2026),
 *PhysioNet as a global platform for biomedical research*, Nature Health.
 DOI: https://doi.org/10.1038/s44360-026-00096-z.
 
-## Experimental live EEG tab clicks
+## Retired amplitude-trigger interface
 
-Live samples can now drive **an amplitude-threshold interaction experiment**.
-This does not use the public classifier and does not recognize thoughts.
-
-1. Open the Live EEG connection section, find/select your eego stream, and connect.
-2. Choose a signal channel using **Display channel**. This is also the trigger channel.
-3. Click **Calibrate · 6 seconds** while keeping a steady baseline.
-4. Choose **Click next website tab** or a specific website tab. Start with the
-   default **1.8× baseline** threshold; the live meter shows the measured ratio.
-5. Click **Arm tab clicks**. After the signal is near baseline for half a second,
-   an amplitude rise held for half a second clicks the selected tab.
-6. Return near baseline before another activation. A 2.5-second cooldown prevents
-   repeated clicks from one sustained rise. Stop at any time with **Escape**,
-   **Stop**, or the fixed **EEG tab clicks ARMED — STOP** button.
-
-The detector uses centered RMS over the most recent 0.5 seconds, divided by
-median RMS from calibration. It has no frequency-specific thought model:
-blinks, muscle activity, movement, and noise can activate it. Its thresholds
-are experimental controls, not validated confidence values. Only navigation
-inside this website is affected; it does not click other applications or browser tabs.
-The task board remains controlled conventionally or by its explicitly labeled
-manual simulation; live EEG controls website navigation only.
-
-Reconnection, a channel change, non-finite/flat data, or a sample/timestamp gap
-requires calibration again. A hidden page stops automatic clicks; rearm after
-returning. Changing the target or threshold also disarms clicks.
-
-Detector regression tests:
+The old `eeg-live.js` / `eeg-trigger.js` panel is no longer mounted on the
+operations or research pages. The simulator at `/speller.html` is the single
+place to connect EEG, inspect signal quality and calibrate the P300 grid.
+The earlier amplitude detector remains in source for reference and regression
+checks; it is not an active website control.
 
 ```sh
 node --test tests/eeg-trigger.test.cjs

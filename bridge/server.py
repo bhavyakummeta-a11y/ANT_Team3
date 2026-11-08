@@ -160,7 +160,7 @@ def create_app(initial_timeout=30, stall_timeout=10):
         return ws
 
     async def asset(request):
-        name = request.match_info.get('name', 'speller.html')
+        name = request.match_info.get('name', 'index.html')
         if name not in {'p300-replay.html', 'p300-replay.js', 'p300-replay.css', 'speller.html', 'speller.js', 'speller.css', 'index.html', 'index2.html', 'eeg-live.js', 'eeg-trigger.js', 'research.html', 'research-ui.js', 'research-ui.css'}:
             raise web.HTTPNotFound()
         response = web.FileResponse(ROOT / name)
