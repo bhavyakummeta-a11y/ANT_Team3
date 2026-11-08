@@ -64,6 +64,13 @@ Windows does not need Python for this setup.
    all 27 epochs, naming each failing electrode. A flat channel and excessive
    raw amplitude are reported separately; thresholds remain 300 µV raw
    peak-to-peak and 0.01 µV raw standard deviation.
+   If the declared unit disagrees with the numeric units verified at the source,
+   choose **Incoming units → Microvolts (µV)** (or Volts) and **Apply units**.
+   Metadata remains the default; there is no automatic amplitude-based rescaling.
+   The override applies only to the selected EEG channels in this connection,
+   clears buffered samples and resets on reconnection. Units and channels lock
+   after the first accepted round. Reports retain both declared and applied units.
+   Quality thresholds remain unchanged, so genuine >300 µV artifacts still fail.
    If the lab operator verifies that an electrode is unused, deselect it under
    **Calibration channels**, then **Apply channels** and check again. At least three
    supported channels including Pz/P3/P4 are required. Choices freeze after the

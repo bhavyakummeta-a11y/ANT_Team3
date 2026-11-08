@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "created_utc": "2026-11-08T15:25:17.509904+00:00",
+  "created_utc": "2026-11-08T16:23:31.417193+00:00",
   "dataset": {
     "name": "BNCI 008-2014 \u00b7 public P300 speller",
     "url": "https://bnci-horizon-2020.eu/database/data-sets",
@@ -42698,7 +42698,7 @@
     "marker_rule": "Rising edges of 32-sample marker pulses, not every nonzero sample; MATLAB trial indices converted to zero-based.",
     "ant_report_sha256": "569186a1833a8dc6966b6f80939ad71e914d758c760e21cb84a63cdfd3969d2a",
     "pipeline_sha256": "209fc7578e37b559fdcc7d78577aefa32d71ecb463ad32a070026ecd32cd0b3d",
-    "shared_decoder_sha256": "09cfe363b966891b2425066903c6ee8c93170d480bf19abeeb069a37f57636c3",
+    "shared_decoder_sha256": "69f5de8621f843f82808efa642d3622959316603b242330ce5fe38d9ab480fed",
     "versions": {
       "numpy": "2.2.6",
       "scipy": "1.15.3",

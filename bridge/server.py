@@ -77,7 +77,7 @@ def create_app(initial_timeout=30, stall_timeout=10):
                         else:
                             result = p300.quality()
                     elif op == 'configure':
-                        result = p300.configure(payload.get('indices'))
+                        result = p300.configure(payload.get('indices'), payload.get('unit_mode'))
                     elif op == 'begin':
                         if not p300.buffer or local_clock() - p300.buffer[-1][0] > 1:
                             raise ValueError('Fresh EEG samples are required.')
@@ -119,7 +119,8 @@ def create_app(initial_timeout=30, stall_timeout=10):
                 p300 = P300Session(full.nominal_srate(), channels(full))
             await ws.send_json({'type': 'connected', 'stream': summary(full), 'channels': channels(full),
                                 'p300_channels': p300.candidates if p300 else [],
-                                'quality_policy': p300.quality_policy() if p300 else None})
+                                'quality_policy': p300.quality_policy() if p300 else None,
+                                'unit_mode': p300.unit_mode if p300 else None})
             last_sample = time.monotonic()
             received = 0
             last_status = 0

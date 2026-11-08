@@ -44,6 +44,7 @@ class P300Session:
         if not 100 <= rate <= 2000:
             raise ValueError('P300 requires a regular EEG stream at 100–2000 Hz.')
         preferred = {'PZ', 'P3', 'P4', 'C3', 'C4', 'FZ', 'CZ'}
+        self.unit_mode = 'metadata'
         self.candidates = []
         for i, channel in enumerate(channels):
             label = channel['label'].upper().replace('-REF', '').strip()
@@ -65,31 +66,43 @@ class P300Session:
         self.rejected_rounds = []
         self.sos = butter(3, [1, 15], btype='bandpass', fs=rate, output='sos')
 
-    def _select_channels(self, indices):
-        selected = [c for c in self.candidates if c['index'] in indices]
+    def _select_channels(self, indices, unit_mode=None):
+        mode = self.unit_mode if unit_mode is None else unit_mode
+        selected = [dict(c) for c in self.candidates if c['index'] in indices]
         if len(selected) < 3 or not {c['label'] for c in selected} & {'PZ', 'P3', 'P4'}:
             raise ValueError('Keep at least three supported EEG channels including Pz, P3 or P4.')
+        for channel in selected:
+            channel['declared_scale_to_uv'] = channel['scale_to_uv']
+            channel['effective_unit'] = channel['source_unit'] if mode == 'metadata' else mode
+            channel['unit_override'] = mode != 'metadata'
+            if mode != 'metadata':
+                channel['scale_to_uv'] = 1 if mode == 'microvolts' else 1e6
         self.selected = selected
         self.indices = [c['index'] for c in selected]
         self.labels = [c['label'] for c in selected]
         self.scales = [c['scale_to_uv'] for c in selected]
 
-    def configure(self, indices):
+    def configure(self, indices, unit_mode=None):
         if self.round is not None or self.trials or self.model is not None:
-            raise ValueError('Channel selection is locked after calibration starts. Reconnect to change it.')
+            raise ValueError('Channels and units are locked after calibration starts. Reconnect to change them.')
         if (not isinstance(indices, list) or any(type(i) is not int for i in indices)
                 or len(set(indices)) != len(indices)
                 or not set(indices).issubset({c['index'] for c in self.candidates})):
             raise ValueError('Choose channels from this stream.')
-        self._select_channels(indices)
+        mode = self.unit_mode if unit_mode is None else unit_mode
+        if not isinstance(mode, str) or mode not in ('metadata', 'microvolts', 'volts'):
+            raise ValueError('Incoming units must be metadata, microvolts or volts.')
+        self._select_channels(indices, mode)
+        self.unit_mode = mode
         self.buffer.clear()
         self.last_quality = None
-        return {'channels': self.selected, 'message': 'Channels applied. Wait three seconds, then Check signal.'}
+        return {'channels': self.selected, 'unit_mode': self.unit_mode,
+                'message': 'Channels and units applied. Wait three seconds, then Check signal.'}
 
     @classmethod
     def quality_policy(cls):
         return dict(max_raw_ptp_uv=cls.MAX_PTP_UV, min_raw_std_uv=cls.MIN_STD_UV,
-                    checked_signal='Unfiltered EEG converted from declared source units to microvolts.',
+                    checked_signal='Unfiltered EEG converted to microvolts using declared units or the explicit session override.',
                     filtered_signal='1–15 Hz; shown for comparison, not substituted for raw quality checks.')
 
     def _quality_report(self, data, filtered, masks, window_seconds=1.0):
@@ -123,7 +136,12 @@ class P300Session:
         message = ('Signal check failed — ' + '; '.join(details) +
                    '. Inspect channel measurements and declared units below. No calibration round was saved.'
                    if bad else 'Raw signal checks passed for the measured window; this does not establish decoding accuracy.')
-        self.last_quality = dict(status='rejected' if bad else 'ok', message=message,
+        unit_warning = ''
+        if self.unit_mode == 'metadata' and any(c['scale_to_uv'] == 1e6 and c['raw_ptp_uv'] > 1e6 for c in channels):
+            unit_warning = ('Possible input-unit mismatch: declared Volt values produce amplitudes above 1,000,000 µV. '
+                            'Verify the numeric units with the source; if values are already µV, choose Microvolts under Incoming units. '
+                            'No automatic rescaling has been applied.')
+        self.last_quality = dict(unit_mode=self.unit_mode, unit_warning=unit_warning, status='rejected' if bad else 'ok', message=message,
                                  channels=channels, window_seconds=window_seconds,
                                  epochs_checked=len(masks), policy=self.quality_policy(),
                                  note='Peak-to-peak values are maxima across checked epochs; SD is the minimum. Source min/max span checked epochs.')
@@ -258,7 +276,7 @@ class P300Session:
     def export(self):
         return dict(schema='neurobind-p300-v1', channels=self.labels, sample_rate=self.rate,
                     trials=self.trials, evaluation=self.report,
-                    selected_channels=self.selected, quality_policy=self.quality_policy(),
+                    selected_channels=self.selected, unit_mode=self.unit_mode, quality_policy=self.quality_policy(),
                     last_quality=self.last_quality, rejected_rounds=self.rejected_rounds,
                     features='Baseline-corrected 1–15 Hz ERP; 16 bins of 50 ms × channels, µV.',
                     timing='Software frame timestamps mapped to receiver LSL clock; physical display latency unmeasured.',

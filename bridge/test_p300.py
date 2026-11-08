@@ -154,6 +154,59 @@ class P300Tests(unittest.TestCase):
         self.assertEqual(report['epochs_checked'], 1)
         self.assertEqual(report['channels'][-1]['reasons'], ['flat raw signal'])
 
+    def test_mislabeled_microvolts_require_explicit_override(self):
+        channels = [dict(label=c['label'], unit='Volt') for c in CHANNELS]
+        s = P300Session(500, channels)
+        times = np.arange(0, 14, 1 / 500)
+        values = np.column_stack([-1400 + a * np.sin(2 * np.pi * 5 * times) for a in [20, 30, 40]])
+        s.feed(values.tolist(), times.tolist())
+        first = s.quality()
+        self.assertEqual(first['status'], 'rejected')
+        self.assertIn('Possible input-unit mismatch', first['unit_warning'])
+        self.assertEqual(s.unit_mode, 'metadata')
+        self.assertEqual(s.scales, [1e6, 1e6, 1e6])
+        original_min = first['channels'][0]['source_min']
+        s.configure([0, 1, 2], 'microvolts')
+        self.assertEqual(len(s.buffer), 0)
+        self.assertIsNone(s.last_quality)
+        s.feed(values.tolist(), times.tolist())
+        second = s.quality()
+        self.assertEqual(second['status'], 'ok')
+        self.assertAlmostEqual(second['channels'][0]['raw_ptp_uv'], 40)
+        self.assertAlmostEqual(second['channels'][0]['source_min'], original_min)
+        self.assertEqual(second['channels'][0]['source_unit'], 'Volt')
+        self.assertEqual(second['channels'][0]['effective_unit'], 'microvolts')
+        self.assertEqual(second['channels'][0]['scale_to_uv'], 1)
+        self.assertEqual(second['channels'][0]['declared_scale_to_uv'], 1e6)
+        self.finish_measured(s)
+        with self.assertRaisesRegex(ValueError, 'locked'):
+            s.configure([0, 1, 2], 'metadata')
+        self.assertEqual(s.export()['unit_mode'], 'microvolts')
+        self.assertEqual(P300Session(500, channels).unit_mode, 'metadata')
+
+    def test_unit_override_does_not_bypass_artifact_checks(self):
+        s = P300Session(500, [dict(label=c['label'], unit='Volt') for c in CHANNELS])
+        s.configure([0, 1, 2], 'microvolts')
+        raw = self.measured_session(high=True)
+        s.feed([row for _, row in raw.buffer], [t for t, _ in raw.buffer])
+        with self.assertRaises(SignalQualityError): self.finish_measured(s)
+        self.assertEqual(s.trials, [])
+        self.assertFalse(s.enabled)
+
+    def test_invalid_units_are_atomic_and_channel_changes_preserve_override(self):
+        s = self.measured_session()
+        before = list(s.buffer)
+        with self.assertRaises(ValueError): s.configure([0, 1, 2], 'guess')
+        self.assertEqual(s.unit_mode, 'metadata')
+        self.assertEqual(list(s.buffer), before)
+        s.configure([0, 1, 2], 'microvolts')
+        s.configure([0, 1, 2])
+        self.assertEqual(s.unit_mode, 'microvolts')
+        s.configure([0, 1, 2], 'volts')
+        self.assertEqual(s.scales, [1e6, 1e6, 1e6])
+        s.configure([0, 1, 2], 'metadata')
+        self.assertEqual(s.scales, [1, 1, 1])
+
     def test_channels_and_units(self):
         with self.assertRaises(ValueError): P300Session(100, [dict(label='C3', unit='Volt')])
         with self.assertRaises(ValueError): P300Session(50, CHANNELS)
